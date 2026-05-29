@@ -1,0 +1,15 @@
+{
+  "name": "SealQR — Confidential Payments & Red Packets",
+  "short_name": "SealQR",
+  "description": "Pay by QR and send red packets where every amount is encrypted on-chain with Zama FHE.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#06070B",
+  "theme_color": "#06070B",
+  "categories": ["finance", "utilities"],
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

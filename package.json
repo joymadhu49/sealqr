@@ -1,0 +1,14 @@
+{
+  "name": "sealqr",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SealQR — confidential payments by QR + confidential red packets (Zama FHE / ERC-7984)",
+  "license": "MIT",
+  "scripts": {
+    "contracts:test": "pnpm --filter sealqr-contracts test",
+    "contracts:compile": "pnpm --filter sealqr-contracts compile",
+    "contracts:deploy:sepolia": "pnpm --filter sealqr-contracts deploy:sepolia",
+    "web:dev": "pnpm --filter sealqr-frontend dev",
+    "web:build": "pnpm --filter sealqr-frontend build"
+  }
+}
