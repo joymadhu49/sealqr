@@ -38,9 +38,9 @@ export function ConnectButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-medium text-white transition hover:bg-white/[0.08]"
+        className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm font-medium text-white transition hover:bg-white/[0.08]"
       >
-        <span className="h-2 w-2 rounded-full bg-seal-400 shadow-[0_0_8px_2px_rgba(52,224,180,0.6)]" />
+        <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_1px_rgba(52,211,153,0.55)]" />
         {shortAddr(address)}
       </button>
 
@@ -62,7 +62,7 @@ export function ConnectButton() {
               }}
               className="btn-ghost px-3 py-2 text-sm"
             >
-              {copied ? <Check className="h-4 w-4 text-seal-400" /> : <Copy className="h-4 w-4" />}
+              {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
             </button>
           </div>
 

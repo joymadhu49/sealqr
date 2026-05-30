@@ -1,6 +1,6 @@
 # SealQR — Session Summary
 
-_Last updated: 2026-05-29_
+_Last updated: 2026-05-30 (Premium Fintech redesign)_
 
 Confidential payments-by-QR + confidential red packets (红包) on Zama FHEVM / ERC-7984. Built from `plan/PLAN.md` for the Zama Developer Program (Special Bounty × TokenOps, UX-scored). Deadline **2026-07-07**.
 
@@ -20,6 +20,65 @@ Confidential payments-by-QR + confidential red packets (红包) on Zama FHEVM / 
 - Screens: Home (balance + activity), Pay (receive QR + history), Packet (create → QR sheet, equal/lucky, my-packets + auditor grant), Scan (camera → claim/pay), Audit (reveal granted amounts)
 - Real integration: wagmi/viem (injected wallet), `@zama-fhe/relayer-sdk` 0.4.1 (encrypt + userDecrypt), `@zxing/browser` scan, `qrcode` gen
 - **Demo mode** fallback (in-memory/localStorage) when addresses unset or `NEXT_PUBLIC_DEMO=1`
+
+---
+
+## 🎨 Premium Fintech Redesign (2026-05-30)
+
+Full visual overhaul → **Revolut / Wise / Apple Wallet** direction (user-chosen): calm, airy, bank-grade. Built foundation-first (singular hand), then 4 parallel agents reskinned screens on frozen primitives. `pnpm build` green (9/9 routes). Net **+804 / −416** over 20 files.
+
+### Foundation (`DESIGN.md` spec drives all)
+- **Palette calmed:** deep cool near-black `ink-*` (`#070810`…), single violet `seal` accent, new **`emerald`** = positive/received, semantic **`surface`** (`DEFAULT`/`raised`/`inset`). Cyan/iris kept legacy.
+- **Shadows softened:** `shadow-card` (resting) + `shadow-lift` (raised) replace heavy `shadow-float`/multi-glow. `glow` reserved for primary CTA + balance only. Removed `shadow-float`, `shadow-glow-cipher`, `bg-grid-fade`.
+- **Page bg:** one subtle violet bloom (was 3 stacked radials). Icons thinner (`--icon-stroke: 1.75`). Motion calmer (springs ~180–260 stiffness, ease `[0.22,1,0.36,1]`, no bounce).
+- **Globals:** new `.card`/`.card-flat`/`.card-inset`, `.row`/`.divider` list pattern, `.pill-accent`, `.tnum` (tabular-nums). `.pill-meta`→alias of `.pill-accent`.
+
+### Primitives reskinned (foundation-owned, frozen for agents)
+- `BalanceCard` (single bloom, tnum, "Add test cUSD"), `AmountInput` (active quick-chip state, tnum), `QRDisplay` (clean white card, no garish ring), `Sheet` (calm spring, `rounded-t-[28px]`, `surface-raised`), `BottomNav`, `ConnectButton` (emerald status dot), `Toaster`.
+
+### Screens reskinned (4 agents, disjoint files)
+- **Home** — premium quick-action tiles, trust-styled privacy block, `.row`/`.divider` activity (emerald=received), strong empty state.
+- **Pay** — calm Receive hero, bank-style confirm sheet (emerald check), tnum history.
+- **Packet** — premium-festive lucky-red/gold (the one place red leads), buttery open/confetti reveal, trustworthy 2-step auditor grant w/ full monospace addr.
+- **Scan + Audit** — native-feel scanner (corner guides + soft scan line), compliance-style disclosure list w/ emerald reveals.
+
+### Build fixes
+- `text-white/12` → `text-white/[0.12]` (non-default opacity step broke CSS build).
+- Stale `shadow-float` in `Toaster.tsx` → `shadow-lift`.
+
+---
+
+## 🎨 UI/UX Pass (2026-05-29)
+
+### Theme — Zama-adjacent, distinct identity
+- **Primary** shifted teal → **electric violet** (`seal-*`: 400 `#8466FF`, 500 `#6E4CFF`, 600 `#5B36F0`). Signals "sealed/encrypted"; distinct from Zama yellow.
+- **Secondary cyan** added (`cipher-*`: 400 `#4FD1C5`, 500 `#27B6A8`) — ciphertext / data-flow accent.
+- **Zama yellow** added as RARE accent only (`zama-*`: 400 `#FFE04D`, 500 `#FFD208`). Used solely for the "Encrypted by Zama FHEVM" footer badge — never primary CTAs.
+- Refined `ink-*` deep neutrals, new gradients (`bg-seal-gradient` violet→cyan, `bg-cipher-gradient`), new shadows (`shadow-glow`, `shadow-glow-cipher`, `shadow-glow-zama`).
+- Globals: new `.pill-tag`, `.pill-meta`, `.pill-zama`, `.btn-danger`, `.pixel-divider` (subtle Zama nod). Focus-visible outlines for a11y. Smoother `animate-spin-smooth` keyframe.
+
+### Bugs fixed (10)
+- `components/ui/Spinner.tsx` — `animate-spin` undefined → `animate-spin-smooth`
+- `components/layout/BottomNav.tsx` — z-index 40→30 (sheets sit on top); non-center labels hide at `<340px`
+- `components/ui/Sheet.tsx` — drag-down now scales (`1 - y/2000`) + fades (`1 - y/600`) via `useMotionValue`/`useTransform`
+- `components/AmountInput.tsx` — `py-7`→`py-5`, `ring-4`→`ring-2`, wrap `overflow-hidden`
+- `components/flows/PayConfirmSheet.tsx` — `useEffect` resets `done`+`amount` on `payload` change
+- `components/BalanceCard.tsx` — `aria-label`, `aria-pressed`, `disabled={revealing}`, violet `ring-1 ring-seal-500/30` when revealed
+- `components/QRScanner.tsx` — inline **Clear** button on manual-paste error
+- `components/flows/ClaimSheet.tsx` — confetti `delay: i * 0.07` stagger, envelope shake `ease: "easeInOut"`
+- `components/CipherText.tsx` callers — standardized to 5 dots (6 for big balance)
+- `app/packet/page.tsx` GrantSheet — two-step `step: "input" | "confirm"`; confirm view shows full monospace address before `grantAuditor` call
+
+### New
+- `components/layout/ZamaBadge.tsx` — "Encrypted by Zama FHEVM" pill + pixel divider + ERC-7984 subtitle. Mounted at bottom of every page in `AppShell`.
+
+---
+
+## 🐙 GitHub + Vercel link (2026-05-29)
+- **Repo:** https://github.com/joymadhu49/sealqr (public, root commit `1d57a5b`)
+- `vercel git connect` — Vercel project `joys-projects-99b5b538/frontend` now auto-deploys on push to `main`
+- Prod re-deployed: https://frontend-beryl-eta-53.vercel.app
+- `.gitignore` extended (`.next/`, `.vercel/`, `artifacts/`, `cache/`, `deployments/`, etc.)
 
 ---
 
@@ -67,6 +126,8 @@ Background procs (dev server + tunnel) were **stopped** at end of session.
 - [ ] (Optional) Verify contracts on Etherscan — add `ETHERSCAN_API_KEY` to `contracts/.env`, run `hardhat verify`
 - [ ] (Optional) Seed an on-chain packet/payment so the live app shows data on first load
 - [ ] Submit: Builder Track and/or Special Bounty
+- [ ] (Optional) Add GitHub README badges (Vercel deploy status, Sepolia chainId, license)
+- [ ] (Optional) Manual QA on real phone: bottom-sheet drag feedback, QR scan, packet open animation
 
 ## ⚠️ Build gotchas (so they aren't re-hit)
 - Inherit `ZamaEthereumConfig` (chain-aware), not a `SepoliaConfig` contract — not exported by `@fhevm/solidity` 0.11.

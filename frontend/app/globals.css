@@ -6,7 +6,7 @@
   --font-sans: "Inter", system-ui, sans-serif;
   --font-display: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
-  --icon-stroke: 2;
+  --icon-stroke: 1.75;
 }
 
 * {
@@ -20,14 +20,13 @@ body {
 
 body {
   @apply bg-ink-950 text-white antialiased;
+  /* Single calm violet bloom up top — premium, not busy */
   background-image:
-    radial-gradient(ellipse 95% 55% at 50% -10%, rgba(110, 76, 255, 0.16), transparent 60%),
-    radial-gradient(ellipse 75% 45% at 100% 4%, rgba(79, 209, 197, 0.10), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(110, 76, 255, 0.08), transparent 60%);
+    radial-gradient(ellipse 90% 50% at 50% -15%, rgba(110, 76, 255, 0.12), transparent 65%);
   background-attachment: fixed;
   overscroll-behavior-y: none;
   text-rendering: optimizeLegibility;
-  font-feature-settings: "cv11", "ss01", "ss03";
+  font-feature-settings: "cv11", "ss01";
 }
 
 .safe-top {
@@ -38,42 +37,65 @@ body {
 }
 
 @layer components {
+  /* ---- Surfaces ---- */
   .card {
-    @apply rounded-3xl border border-white/[0.07] bg-ink-850/80 backdrop-blur-xl shadow-card;
+    @apply rounded-3xl border border-white/[0.08] bg-surface/90 backdrop-blur-xl shadow-card;
+  }
+  .card-flat {
+    @apply rounded-3xl border border-white/[0.06] bg-white/[0.02];
+  }
+  .card-inset {
+    @apply rounded-2xl border border-white/[0.06] bg-ink-900/70;
   }
   .card-hover {
-    @apply transition-all duration-300 hover:border-white/[0.16] hover:shadow-float active:scale-[0.99] cursor-pointer;
+    @apply transition-all duration-300 hover:border-white/[0.14] hover:bg-surface active:scale-[0.995] cursor-pointer;
   }
+  /* List row inside a card */
+  .row {
+    @apply flex items-center gap-3 px-4 py-3.5;
+  }
+  .divider {
+    @apply h-px w-full bg-white/[0.06];
+  }
+
+  /* ---- Pills / labels ---- */
   .pill {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-white/70;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-white/65;
   }
   .pill-tag {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-0.5 text-[11px] font-medium text-white/55;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.03] px-2.5 py-0.5 text-[11px] font-medium text-white/55;
   }
-  .pill-meta {
+  .pill-accent {
     @apply inline-flex items-center gap-1.5 rounded-full border border-seal-500/25 bg-seal-500/10 px-3 py-1 text-xs font-medium text-seal-200;
   }
-  /* Subtle Zama nod — used ONLY for FHE-on indicator / "Powered by Zama" */
+  /* legacy alias */
+  .pill-meta {
+    @apply pill-accent;
+  }
   .pill-zama {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-zama-500/35 bg-zama-500/10 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-zama-400;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-zama-500/30 bg-zama-500/[0.08] px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-zama-400;
   }
   .label {
-    @apply text-xs font-medium uppercase tracking-[0.16em] text-white/45;
+    @apply text-[11px] font-medium uppercase tracking-[0.16em] text-white/40;
   }
+
+  /* ---- Inputs ---- */
   .input-base {
-    @apply w-full rounded-2xl border border-white/10 bg-ink-900/80 px-4 py-3.5 text-white placeholder:text-white/30 outline-none transition focus:border-seal-500/60 focus:ring-4 focus:ring-seal-500/15;
+    @apply w-full rounded-2xl border border-white/[0.08] bg-ink-900/80 px-4 py-3.5 text-white placeholder:text-white/30 outline-none transition focus:border-seal-500/50 focus:ring-2 focus:ring-seal-500/15;
   }
+
+  /* ---- Buttons ---- */
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-[15px] font-semibold transition-all duration-200 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 select-none;
   }
   .btn-primary {
-    @apply btn bg-seal-gradient text-white shadow-glow hover:brightness-110;
+    @apply btn bg-seal-gradient text-white shadow-glow hover:brightness-[1.08];
   }
   .btn-lucky {
-    @apply btn bg-lucky-gradient text-white shadow-[0_10px_44px_-10px_rgba(229,72,77,0.5)] hover:brightness-110;
+    @apply btn bg-lucky-gradient text-white shadow-glow-lucky hover:brightness-[1.08];
   }
   .btn-ghost {
-    @apply btn border border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.07];
+    @apply btn border border-white/[0.1] bg-white/[0.03] text-white hover:bg-white/[0.07];
   }
   .btn-dark {
     @apply btn bg-ink-700 text-white hover:bg-ink-600;
@@ -81,14 +103,21 @@ body {
   .btn-danger {
     @apply btn border border-lucky-500/40 bg-lucky-500/10 text-lucky-300 hover:bg-lucky-500/20;
   }
+
   /* Zama-style pixel divider — sparing decorative motif */
   .pixel-divider {
-    height: 4px;
-    background-image:
-      linear-gradient(to right, currentColor 50%, transparent 50%);
-    background-size: 8px 4px;
+    height: 3px;
+    background-image: linear-gradient(to right, currentColor 50%, transparent 50%);
+    background-size: 7px 3px;
     background-repeat: repeat-x;
-    @apply text-white/15;
+    @apply text-white/[0.12];
+  }
+}
+
+@layer utilities {
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
 }
 
@@ -107,13 +136,13 @@ body {
 .cipher::after {
   content: "";
   @apply absolute inset-0 -translate-x-full;
-  background: linear-gradient(90deg, transparent, rgba(110, 76, 255, 0.18), transparent);
-  animation: shimmer 2s infinite;
+  background: linear-gradient(90deg, transparent, rgba(110, 76, 255, 0.16), transparent);
+  animation: shimmer 2.4s ease-in-out infinite;
 }
 
 /* Focus visibility for keyboard nav */
 :focus-visible {
-  outline: 2px solid rgba(110, 76, 255, 0.6);
+  outline: 2px solid rgba(110, 76, 255, 0.55);
   outline-offset: 2px;
   border-radius: 6px;
 }

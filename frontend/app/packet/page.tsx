@@ -14,6 +14,12 @@ import { cn } from "@/lib/utils";
 import type { PacketCard, PacketShare } from "@/lib/types";
 import { isAddress, type Address } from "viem";
 
+const fade = (i: number) => ({
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const, delay: i * 0.05 },
+});
+
 export default function PacketPage() {
   const { createPacket, myPackets, refreshPackets, grantPacketAuditor, needsWallet, connect } = useSeal();
   const [amount, setAmount] = useState("");
@@ -63,83 +69,107 @@ export default function PacketPage() {
 
   return (
     <div className="space-y-6 pt-2">
-      <div className="px-1">
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <Gift className="h-6 w-6 text-lucky-400" /> Red Packet
-        </h1>
-        <p className="mt-1 text-sm text-white/50">Fund one sealed gift, share a single link, let the group grab it.</p>
-      </div>
+      <motion.div {...fade(0)} className="px-1">
+        <p className="label flex items-center gap-1.5 text-lucky-400">
+          <Sparkles className="h-3.5 w-3.5" /> Red packet · 红包
+        </p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight">Send a sealed gift</h1>
+        <p className="mt-1.5 text-sm text-white/50">
+          Fund one packet, share a single link, let the group grab it. Every amount stays encrypted.
+        </p>
+      </motion.div>
 
+      {/* create card — lucky-red is the lead here */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.5 }}
-        className="card space-y-5 p-6"
+        {...fade(1)}
+        className="relative overflow-hidden rounded-3xl border border-lucky-500/20 bg-surface/90 p-6 shadow-card backdrop-blur-xl"
       >
-        <div>
-          <label className="label">Total amount</label>
-          <div className="mt-2">
-            <AmountInput value={amount} onChange={setAmount} accent="lucky" />
-          </div>
-        </div>
-
-        {/* count stepper */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-white/40" />
-            <span className="text-sm font-medium text-white/80">Recipients</span>
-          </div>
+        <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-lucky-500/15 blur-3xl" />
+        <div className="relative space-y-6">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setCount((c) => Math.max(1, c - 1))}
-              className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-white transition active:scale-90"
-            >
-              <Minus className="h-4 w-4" />
-            </button>
-            <span className="w-8 text-center text-lg font-bold">{count}</span>
-            <button
-              onClick={() => setCount((c) => Math.min(50, c + 1))}
-              className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-white transition active:scale-90"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-lucky-gradient shadow-glow-lucky">
+              <Gift className="h-6 w-6 text-white" strokeWidth={1.75} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">New red packet</p>
+              <p className="text-xs text-white/45">Confidential · on-chain</p>
+            </div>
           </div>
-        </div>
 
-        {/* split mode */}
-        <div>
-          <label className="label">Split</label>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <ModeBtn active={mode === "lucky"} onClick={() => setMode("lucky")} icon={<Sparkles className="h-4 w-4" />} title="Lucky" sub="Random blind box" />
-            <ModeBtn active={mode === "equal"} onClick={() => setMode("equal")} icon={<Equal className="h-4 w-4" />} title="Equal" sub="Same for all" />
+          <div>
+            <label className="label">Total amount</label>
+            <div className="mt-2">
+              <AmountInput value={amount} onChange={setAmount} accent="lucky" />
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label className="label">Message (optional)</label>
-          <input
-            value={memo}
-            onChange={(e) => setMemo(e.target.value.slice(0, 40))}
-            placeholder="Happy New Year! 🧧"
-            className="input-base mt-2"
-          />
-        </div>
+          {/* count stepper */}
+          <div className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-ink-900/70 px-4 py-3.5">
+            <div className="flex items-center gap-2.5">
+              <Users className="h-4 w-4 text-white/40" />
+              <div>
+                <p className="text-sm font-medium text-white">Recipients</p>
+                <p className="text-xs text-white/40">First {count} to scan claim a slot</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setCount((c) => Math.max(1, c - 1))}
+                aria-label="Fewer recipients"
+                className="grid h-9 w-9 place-items-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-white transition hover:border-white/[0.14] active:scale-90"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              <span className="w-8 text-center text-lg font-bold tnum">{count}</span>
+              <button
+                onClick={() => setCount((c) => Math.min(50, c + 1))}
+                aria-label="More recipients"
+                className="grid h-9 w-9 place-items-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-white transition hover:border-white/[0.14] active:scale-90"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
 
-        {needsWallet ? (
-          <button onClick={connect} className="btn-lucky w-full">Connect wallet</button>
-        ) : (
-          <button onClick={onCreate} disabled={busy} className="btn-lucky w-full">
-            {busy ? <Spinner /> : <Gift className="h-4 w-4" />}
-            {busy ? "Sealing & funding…" : `Seal packet for ${count} ${count === 1 ? "person" : "people"}`}
-          </button>
-        )}
+          {/* split mode */}
+          <div>
+            <label className="label">Split</label>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <ModeBtn active={mode === "lucky"} onClick={() => setMode("lucky")} icon={<Sparkles className="h-4 w-4" />} title="Lucky" sub="Random blind box" />
+              <ModeBtn active={mode === "equal"} onClick={() => setMode("equal")} icon={<Equal className="h-4 w-4" />} title="Equal" sub="Same for all" />
+            </div>
+          </div>
+
+          <div>
+            <label className="label">Message (optional)</label>
+            <input
+              value={memo}
+              onChange={(e) => setMemo(e.target.value.slice(0, 40))}
+              placeholder="Happy New Year! 🧧"
+              className="input-base mt-2"
+            />
+          </div>
+
+          {needsWallet ? (
+            <button onClick={connect} className="btn-lucky w-full">Connect wallet</button>
+          ) : (
+            <button onClick={onCreate} disabled={busy} className="btn-lucky w-full">
+              {busy ? <Spinner /> : <Gift className="h-4 w-4" />}
+              {busy ? "Sealing & funding…" : `Seal packet for ${count} ${count === 1 ? "person" : "people"}`}
+            </button>
+          )}
+
+          <p className="flex items-center justify-center gap-1.5 text-center text-xs text-white/40">
+            <ShieldCheck className="h-3.5 w-3.5" /> Amounts encrypted with FHE — sealed even from you.
+          </p>
+        </div>
       </motion.div>
 
       {/* my packets */}
       {packets.length > 0 && (
-        <div>
+        <motion.div {...fade(2)}>
           <div className="mb-3 flex items-center justify-between px-1">
-            <h3 className="text-sm font-semibold text-white/80">Your packets</h3>
+            <p className="label">Your packets</p>
             <button onClick={refreshPackets} className="inline-flex items-center gap-1 text-xs text-white/40 transition hover:text-white/70">
               <RefreshCw className="h-3 w-3" /> Refresh
             </button>
@@ -147,12 +177,13 @@ export default function PacketPage() {
           <div className="space-y-2.5">
             {packets.map((p) => {
               const pct = p.count ? Math.round((p.claimed / p.count) * 100) : 0;
+              const done = p.claimed >= p.count;
               const isRevealed = revealed.has(p.id);
               return (
                 <div key={p.id} className="card p-4">
                   <div className="flex items-center gap-3">
-                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-lucky-gradient">
-                      <Gift className="h-5 w-5 text-white" />
+                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-lucky-gradient shadow-glow-lucky">
+                      <Gift className="h-5 w-5 text-white" strokeWidth={1.75} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-white">{p.memo || "Red packet"}</p>
@@ -163,7 +194,7 @@ export default function PacketPage() {
                     {/* total — sealed until tapped */}
                     <button
                       onClick={() => toggleReveal(p.id)}
-                      className="flex items-center gap-1.5 text-sm font-semibold text-white/80"
+                      className="flex items-center gap-1.5 text-sm font-semibold tnum text-white/80 transition hover:text-white"
                       title={isRevealed ? "Hide amount" : "Reveal amount"}
                     >
                       {isRevealed && p.totalKnown !== undefined ? (
@@ -175,36 +206,43 @@ export default function PacketPage() {
                     </button>
                   </div>
 
-                  <div className="mt-3 flex items-center gap-3">
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
-                      <div className="h-full rounded-full bg-lucky-gradient transition-all" style={{ width: `${pct}%` }} />
+                  <div className="mt-3.5 flex items-center gap-3">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.07]">
+                      <motion.div
+                        className={cn("h-full rounded-full", done ? "bg-emerald-500" : "bg-lucky-gradient")}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                      />
                     </div>
-                    <span className="text-xs font-medium text-white/55">
+                    <span className="text-xs font-medium tnum text-white/55">
                       {p.claimed}/{p.count} claimed
                     </span>
                   </div>
 
-                  <div className="mt-3 flex items-center gap-4">
+                  <div className="divider my-3.5" />
+
+                  <div className="flex items-center gap-4">
                     {p.share && (
                       <button
                         onClick={() => setShareFor(p)}
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-lucky-400 transition hover:text-lucky-400/80"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-lucky-300 transition hover:text-lucky-300/80"
                       >
                         <Share2 className="h-3.5 w-3.5" /> Share link
                       </button>
                     )}
                     <button
                       onClick={() => setGrantFor(p.id)}
-                      className="inline-flex items-center gap-1.5 text-xs font-medium text-iris-400 transition hover:text-iris-400/80"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-iris-400 transition hover:text-iris-400/80"
                     >
-                      <Eye className="h-3.5 w-3.5" /> Grant auditor
+                      <ShieldCheck className="h-3.5 w-3.5" /> Grant auditor
                     </button>
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* QR sheet for a freshly-created packet */}
@@ -249,11 +287,11 @@ function ModeBtn({
     <button
       onClick={onClick}
       className={cn(
-        "flex flex-col items-start gap-1 rounded-2xl border p-3 text-left transition",
-        active ? "border-lucky-500/50 bg-lucky-500/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]",
+        "flex flex-col items-start gap-1 rounded-2xl border p-3 text-left transition active:scale-[0.98]",
+        active ? "border-lucky-500/50 bg-lucky-500/10 shadow-glow-lucky" : "border-white/[0.08] bg-white/[0.03] hover:border-white/[0.14]",
       )}
     >
-      <span className={cn("flex items-center gap-1.5 text-sm font-semibold", active ? "text-lucky-400" : "text-white")}>
+      <span className={cn("flex items-center gap-1.5 text-sm font-semibold", active ? "text-lucky-300" : "text-white")}>
         {icon} {title}
       </span>
       <span className="text-xs text-white/45">{sub}</span>
@@ -305,9 +343,11 @@ function GrantSheet({
   return (
     <Sheet open={!!packetId} onClose={close} title="Grant auditor access">
       <div className="space-y-4">
-        <div className="flex items-center gap-2 rounded-2xl border border-iris-500/20 bg-iris-500/[0.06] px-4 py-3">
-          <ShieldCheck className="h-4 w-4 shrink-0 text-iris-400" />
-          <p className="text-xs text-white/65">
+        <div className="card-inset flex items-start gap-3 p-4">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-iris-500/15">
+            <ShieldCheck className="h-4 w-4 text-iris-400" />
+          </div>
+          <p className="text-xs leading-relaxed text-white/65">
             Selective disclosure: the auditor gets a scoped key to decrypt totals and per-slot amounts for this packet
             only. The public still sees nothing.
           </p>
@@ -320,23 +360,24 @@ function GrantSheet({
               <input value={addr} onChange={(e) => setAddr(e.target.value)} placeholder="0x…" className="input-base mt-2 font-mono text-sm" />
             </div>
             <button onClick={toConfirm} className="btn-primary w-full">
-              <Eye className="h-4 w-4" /> Grant access
+              <ShieldCheck className="h-4 w-4" /> Review grant
             </button>
           </>
         ) : (
           <>
             <div>
-              <p className="label">You are about to grant decryption access to:</p>
-              <p className="mt-2 break-all rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 font-mono text-xs text-white/85">
+              <p className="label">Granting decryption access to</p>
+              <p className="mt-2 break-all rounded-2xl border border-iris-500/25 bg-iris-500/[0.06] px-4 py-3.5 font-mono text-xs leading-relaxed text-white/90">
                 {addr}
               </p>
-              <p className="mt-2 text-xs text-white/45">
-                This is irreversible on-chain. Double-check every character.
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-white/45">
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+                Irreversible on-chain. Double-check every character.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setStep("input")} disabled={busy} className="btn-ghost w-full">
-                Cancel
+                Back
               </button>
               <button onClick={confirmGrant} disabled={busy} className="btn-primary w-full">
                 {busy ? <Spinner /> : <ShieldCheck className="h-4 w-4" />} Confirm grant

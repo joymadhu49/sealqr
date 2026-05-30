@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Gift, Sparkles, Lock } from "lucide-react";
+import { Gift, Sparkles, Lock, ShieldCheck } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { useSeal } from "@/lib/seal";
@@ -12,6 +12,8 @@ import { toast } from "@/lib/toast";
 import type { PacketPayload } from "@/lib/payloads";
 
 type Stage = "ready" | "claiming" | "claimed" | "revealed";
+
+const CONFETTI = 10;
 
 export function ClaimSheet({
   payload,
@@ -45,46 +47,92 @@ export function ClaimSheet({
     }
   };
 
+  const opened = stage === "claimed" || stage === "revealed";
+
   return (
     <Sheet open={open} onClose={close} title={undefined}>
       {!payload ? null : (
         <div className="flex flex-col items-center py-4 text-center">
           {/* Envelope */}
           <div className="relative mb-6">
+            {/* soft halo behind the packet */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={opened ? { opacity: 1, scale: 1 } : { opacity: 0.55, scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 28 }}
+              className="absolute inset-0 -z-10 rounded-full bg-lucky-500/25 blur-2xl"
+            />
             <AnimatePresence>
-              {(stage === "claimed" || stage === "revealed") && (
+              {opened && (
                 <>
-                  {[...Array(8)].map((_, i) => (
-                    <motion.span
-                      key={i}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: [0, 1, 0], scale: [0, 1, 0.8], x: Math.cos((i / 8) * 6.28) * 70, y: Math.sin((i / 8) * 6.28) * 70 }}
-                      transition={{ duration: 1.1, delay: i * 0.07 }}
-                      className="absolute left-1/2 top-1/2 h-2 w-2 rounded-full bg-gold-400"
-                    />
-                  ))}
+                  {[...Array(CONFETTI)].map((_, i) => {
+                    const angle = (i / CONFETTI) * 6.283;
+                    const dist = 78;
+                    const colors = ["bg-gold-400", "bg-lucky-400", "bg-gold-300"];
+                    return (
+                      <motion.span
+                        key={i}
+                        initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+                        animate={{
+                          opacity: [0, 1, 1, 0],
+                          scale: [0, 1, 1, 0.7],
+                          x: Math.cos(angle) * dist,
+                          y: Math.sin(angle) * dist,
+                        }}
+                        transition={{ duration: 1.2, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+                        className={`absolute left-1/2 top-1/2 h-2 w-2 rounded-full ${colors[i % colors.length]}`}
+                      />
+                    );
+                  })}
                 </>
               )}
             </AnimatePresence>
             <motion.div
-              animate={stage === "claiming" ? { rotate: [0, -4, 4, -3, 0] } : {}}
-              transition={{ repeat: stage === "claiming" ? Infinity : 0, duration: 0.6, ease: "easeInOut" }}
-              className="grid h-28 w-28 place-items-center rounded-4xl bg-lucky-gradient shadow-[0_16px_50px_-12px_rgba(229,72,77,0.6)]"
+              animate={
+                stage === "claiming"
+                  ? { rotate: [0, -5, 5, -4, 4, 0] }
+                  : opened
+                    ? { scale: [1, 1.08, 1], rotate: 0 }
+                    : { scale: 1, rotate: 0 }
+              }
+              transition={
+                stage === "claiming"
+                  ? { repeat: Infinity, duration: 0.7, ease: "easeInOut" }
+                  : { type: "spring", stiffness: 240, damping: 18 }
+              }
+              className="relative grid h-28 w-28 place-items-center rounded-4xl bg-lucky-gradient shadow-glow-lucky"
             >
-              {stage === "ready" || stage === "claiming" ? (
-                <Gift className="h-14 w-14 text-white" strokeWidth={1.8} />
-              ) : (
-                <Sparkles className="h-14 w-14 text-white" strokeWidth={1.8} />
-              )}
+              <AnimatePresence mode="wait">
+                {opened ? (
+                  <motion.span
+                    key="open"
+                    initial={{ opacity: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                  >
+                    <Sparkles className="h-14 w-14 text-white" strokeWidth={1.75} />
+                  </motion.span>
+                ) : (
+                  <motion.span key="closed" exit={{ opacity: 0, scale: 0.6 }}>
+                    <Gift className="h-14 w-14 text-white" strokeWidth={1.75} />
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </motion.div>
           </div>
 
           {stage === "ready" && (
-            <>
-              <h3 className="text-xl font-bold">Red Packet</h3>
-              {payload.m && <p className="mt-1 text-sm text-white/55">“{payload.m}”</p>}
-              <p className="mt-2 max-w-xs text-sm text-white/45">
-                Someone sent you a confidential gift. The amount is sealed — nobody knows what’s inside until you open it.
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="flex w-full flex-col items-center"
+            >
+              <p className="label text-lucky-400">红包 · Red packet</p>
+              <h3 className="mt-1.5 text-xl font-bold">You&apos;ve got a gift</h3>
+              {payload.m && <p className="mt-1 text-sm text-white/65">“{payload.m}”</p>}
+              <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/45">
+                Someone sent you a confidential gift. The amount is sealed — nobody knows what&apos;s inside until you open it.
               </p>
               {needsWallet ? (
                 <button onClick={connect} className="btn-lucky mt-6 w-full">
@@ -92,10 +140,10 @@ export function ClaimSheet({
                 </button>
               ) : (
                 <button onClick={onClaim} className="btn-lucky mt-6 w-full">
-                  Open packet
+                  <Gift className="h-4 w-4" /> Open packet
                 </button>
               )}
-            </>
+            </motion.div>
           )}
 
           {stage === "claiming" && (
@@ -107,33 +155,44 @@ export function ClaimSheet({
             </>
           )}
 
-          {(stage === "claimed" || stage === "revealed") && (
-            <>
-              <h3 className="text-xl font-bold">You received</h3>
+          {opened && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+              className="flex w-full flex-col items-center"
+            >
+              <p className="label text-emerald-400">You received</p>
               <div className="mt-3 text-5xl font-bold tracking-tight">
                 {stage === "claimed" ? (
-                  <button onClick={() => setStage("revealed")} className="inline-flex items-center gap-3 text-white/85">
+                  <button onClick={() => setStage("revealed")} className="inline-flex items-center gap-3 text-white/85 transition hover:text-white">
                     <Lock className="h-7 w-7 opacity-50" />
                     <span className="font-mono tracking-[0.18em]">••••</span>
                   </button>
                 ) : (
                   <RevealValue>
-                    <span className="bg-lucky-gradient bg-clip-text text-transparent">
+                    <span className="bg-lucky-gradient bg-clip-text tnum text-transparent">
                       {amount !== null ? formatCUSD(amount, { symbol: false }) : "0"}
                     </span>
                     <span className="ml-2 text-2xl font-semibold text-white/40">cUSD</span>
                   </RevealValue>
                 )}
               </div>
-              <p className="mt-2 text-xs text-white/45">
-                {stage === "claimed"
-                  ? "Hidden on-chain. Tap to reveal — only you can decrypt it."
-                  : "Visible only to you. The public ledger shows nothing."}
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-white/45">
+                {stage === "claimed" ? (
+                  <>
+                    <Lock className="h-3.5 w-3.5" /> Hidden on-chain. Tap to reveal — only you can decrypt it.
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="h-3.5 w-3.5" /> Visible only to you. The public ledger shows nothing.
+                  </>
+                )}
               </p>
               <button onClick={close} className="btn-ghost mt-6 w-full">
                 Done
               </button>
-            </>
+            </motion.div>
           )}
         </div>
       )}

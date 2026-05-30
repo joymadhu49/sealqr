@@ -28,8 +28,8 @@ export function Toaster() {
             initial={{ opacity: 0, y: -24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -16, scale: 0.96 }}
-            transition={{ type: "spring", stiffness: 420, damping: 32 }}
-            className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border border-white/10 bg-ink-800/90 px-4 py-3 shadow-float backdrop-blur-xl"
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border border-white/[0.08] bg-surface-raised/95 px-4 py-3 shadow-lift backdrop-blur-xl"
           >
             <div className="mt-0.5 shrink-0">{icons[t.kind]}</div>
             <div className="min-w-0 flex-1">

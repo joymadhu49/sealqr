@@ -33,7 +33,7 @@ export function Sheet({
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 380, damping: 38 }}
+            transition={{ type: "spring", stiffness: 260, damping: 30 }}
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}
@@ -41,7 +41,7 @@ export function Sheet({
             onDragEnd={(_, info) => {
               if (info.offset.y > 120) onClose();
             }}
-            className="safe-bottom fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-4xl border-t border-white/10 bg-ink-850 px-5 pb-6 pt-3 shadow-float"
+            className="safe-bottom fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-[28px] border-t border-white/[0.08] bg-surface-raised px-5 pb-6 pt-3 shadow-lift"
           >
             <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-white/15" />
             {title && (

@@ -18,7 +18,7 @@ export function BottomNav() {
   const pathname = usePathname();
   return (
     <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-md px-4 pb-3">
-      <div className="relative flex items-center justify-between rounded-3xl border border-white/10 bg-ink-800/80 px-2 py-2 shadow-float backdrop-blur-2xl">
+      <div className="relative flex items-center justify-between rounded-[26px] border border-white/[0.08] bg-surface-raised/85 px-2 py-2 shadow-lift backdrop-blur-2xl">
         {tabs.map((t) => {
           const active = t.href === "/" ? pathname === "/" : pathname.startsWith(t.href);
           const Icon = t.icon;
@@ -45,7 +45,7 @@ export function BottomNav() {
                 <motion.span
                   layoutId="navpill"
                   className="absolute inset-0 rounded-2xl bg-white/[0.06]"
-                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                  transition={{ type: "spring", stiffness: 280, damping: 30 }}
                 />
               )}
               <Icon className="relative h-5 w-5" strokeWidth={active ? 2.4 : 2} />

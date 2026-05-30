@@ -40,16 +40,16 @@ export function QRDisplay({
     toast.success("Link copied");
   };
 
-  const ring = accent === "lucky" ? "ring-lucky-500/40" : "ring-seal-500/40";
+  const glow = accent === "lucky" ? "shadow-glow-lucky" : "shadow-glow";
 
   return (
     <div className="flex flex-col items-center">
-      <div className={`rounded-3xl bg-white p-4 shadow-glow ring-2 ${ring}`}>
+      <div className={`rounded-[28px] bg-white p-5 ${glow}`}>
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt="QR code" width={256} height={256} className="h-56 w-56 rounded-xl" />
+          <img src={src} alt="QR code" width={256} height={256} className="h-56 w-56 rounded-2xl" />
         ) : (
-          <div className="grid h-56 w-56 place-items-center rounded-xl text-ink-900">
+          <div className="grid h-56 w-56 place-items-center rounded-2xl text-ink-900">
             <Spinner className="h-6 w-6" />
           </div>
         )}
@@ -64,7 +64,7 @@ export function QRDisplay({
           }}
           className="btn-ghost px-4 py-2.5 text-sm"
         >
-          {copied ? <Check className="h-4 w-4 text-seal-400" /> : <Copy className="h-4 w-4" />}
+          {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
           {copied ? "Copied" : "Copy"}
         </button>
         <button onClick={onShare} className="btn-ghost px-4 py-2.5 text-sm">
