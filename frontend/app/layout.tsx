@@ -27,7 +27,8 @@ export const viewport: Viewport = {
   themeColor: "#08090D",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // No maximumScale — locking zoom fails WCAG 1.4.4; users must be able to
+  // pinch-zoom hex addresses, amounts, and QR codes on a payments app.
   viewportFit: "cover",
 };
 

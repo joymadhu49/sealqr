@@ -6,7 +6,7 @@ import { useSeal } from "@/lib/seal";
 import { ConnectButton } from "@/components/wallet/ConnectButton";
 
 export function Header() {
-  const { mode } = useSeal();
+  const { mode, wrongNetwork } = useSeal();
   return (
     <header className="safe-top sticky top-0 z-40 flex items-center justify-between bg-ink-950/70 px-4 pb-3 pt-3 backdrop-blur-xl">
       <Link href="/" className="flex min-w-0 items-center gap-2.5">
@@ -15,8 +15,12 @@ export function Header() {
         </span>
         <span className="flex min-w-0 flex-col leading-none">
           <span className="font-display text-[17px] font-bold tracking-tight text-white">SealQR</span>
-          <span className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-seal-400/80">
-            {mode === "demo" ? "Demo Mode" : "Sepolia"}
+          <span
+            className={`mt-0.5 text-[10px] font-medium uppercase tracking-[0.18em] ${
+              wrongNetwork ? "text-amber-400" : "text-seal-400/80"
+            }`}
+          >
+            {mode === "demo" ? "Demo Mode" : wrongNetwork ? "Wrong network" : "Sepolia"}
           </span>
         </span>
       </Link>

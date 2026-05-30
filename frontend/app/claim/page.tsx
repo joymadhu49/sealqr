@@ -19,9 +19,16 @@ export default function ClaimPage() {
   const [status, setStatus] = useState<"loading" | "ok" | "bad">("loading");
 
   useEffect(() => {
-    const raw = (typeof window !== "undefined" ? window.location.hash || window.location.search : "").replace(/^[#?]/, "");
+    // The bearer secret lives ONLY in the URL fragment (`#…`), which never reaches
+    // a server log, the Referer header, or CDN access logs. Do not fall back to the
+    // query string — that would silently bless secrets that DO leak server-side.
+    const raw = (typeof window !== "undefined" ? window.location.hash : "").replace(/^#/, "");
     const p = raw ? decodePayload(decodeURIComponent(raw)) : null;
     if (!p) return setStatus("bad");
+    // Scrub the secret out of the address bar so it doesn't linger in history.
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
     if (p.t === "rp") setPacket(p);
     else setPayReq(p);
     setStatus("ok");

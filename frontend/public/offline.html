@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>SealQR — Offline</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; height: 100%; }
+      body {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 24px;
+        background: #070810;
+        color: #fff;
+        text-align: center;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      .wrap { max-width: 22rem; }
+      .badge {
+        width: 56px; height: 56px;
+        margin: 0 auto 20px;
+        display: grid; place-items: center;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #8e70ff 0%, #6e4cff 55%, #5a37e8 120%);
+      }
+      h1 { font-size: 1.25rem; margin: 0 0 8px; letter-spacing: -0.01em; }
+      p { margin: 0 0 24px; font-size: 0.875rem; line-height: 1.6; color: rgba(255, 255, 255, 0.55); }
+      button {
+        font: inherit; font-weight: 600;
+        color: #070810; background: #6e4cff;
+        border: 0; border-radius: 14px;
+        padding: 12px 22px; cursor: pointer;
+      }
+      button:hover { background: #8e70ff; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="badge" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#070810" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      </div>
+      <h1>You're offline</h1>
+      <p>SealQR can't reach the network right now. Check your connection and try again.</p>
+      <button onclick="location.reload()">Retry</button>
+    </div>
+  </body>
+</html>

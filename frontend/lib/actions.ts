@@ -6,8 +6,10 @@ import {
   waitForTransactionReceipt,
   signTypedData,
   getPublicClient,
+  getAccount,
+  switchChain,
 } from "wagmi/actions";
-import type { Address, Hex } from "viem";
+import { parseEventLogs, keccak256, encodePacked, type Address, type Hex } from "viem";
 import { sepolia } from "wagmi/chains";
 import { wagmiConfig } from "./wagmi";
 import { addresses } from "./contracts/addresses";
@@ -16,10 +18,36 @@ import { encryptAmount, encryptAmounts, userDecrypt, type DecryptItem } from "./
 import { signClaim, type PacketKey } from "./redpacket";
 import type { PacketPayload, PayRequestPayload } from "./payloads";
 
+// SealQR is a single-chain (Sepolia-only) app. Every read is pinned to this
+// chain so it resolves through the configured Sepolia transport regardless of
+// the wallet's active network; every write asserts against it (and ensureSepolia
+// proactively switches the wallet first) so a tx can never silently land on the
+// wrong chain — the root cause behind "balance/flows don't work after reconnect".
+const CHAIN = sepolia.id;
 const OPERATOR_WINDOW = 60 * 60 * 24 * 30; // 30 days
+
+/** Raised when a pay request's one-time nonce has already been consumed on-chain. */
+export class NonceUsedError extends Error {
+  constructor() {
+    super("This request has already been paid. Ask for a fresh code.");
+    this.name = "NonceUsedError";
+  }
+}
 
 const signer = (args: { domain: any; types: any; primaryType: string; message: any }) =>
   signTypedData(wagmiConfig, args as any) as Promise<Hex>;
+
+/**
+ * Make sure the connected wallet is actually on Sepolia before sending a tx.
+ * Writes go through the injected/WalletConnect provider on the wallet's ACTIVE
+ * chain; MetaMask defaults to mainnet, where the SealQR contracts don't exist,
+ * so without this a faucet/create/claim/pay would broadcast to the wrong chain.
+ */
+async function ensureSepolia(): Promise<void> {
+  const { isConnected, chainId } = getAccount(wagmiConfig);
+  if (!isConnected || chainId === CHAIN) return;
+  await switchChain(wagmiConfig, { chainId: CHAIN });
+}
 
 export async function decryptHandles(items: DecryptItem[], me: Address): Promise<Record<string, bigint>> {
   return userDecrypt(items, me, signer);
@@ -27,6 +55,7 @@ export async function decryptHandles(items: DecryptItem[], me: Address): Promise
 
 export async function getBalanceHandle(me: Address): Promise<Hex> {
   return (await readContract(wagmiConfig, {
+    chainId: CHAIN,
     abi: confidentialUSDAbi,
     address: addresses.ConfidentialUSD,
     functionName: "confidentialBalanceOf",
@@ -35,16 +64,19 @@ export async function getBalanceHandle(me: Address): Promise<Hex> {
 }
 
 export async function faucet(): Promise<void> {
+  await ensureSepolia();
   const hash = await writeContract(wagmiConfig, {
+    chainId: CHAIN,
     abi: confidentialUSDAbi,
     address: addresses.ConfidentialUSD,
     functionName: "faucet",
   });
-  await waitForTransactionReceipt(wagmiConfig, { hash });
+  await waitForTransactionReceipt(wagmiConfig, { chainId: CHAIN, hash });
 }
 
 async function ensureOperator(me: Address, spender: Address): Promise<void> {
   const ok = (await readContract(wagmiConfig, {
+    chainId: CHAIN,
     abi: confidentialUSDAbi,
     address: addresses.ConfidentialUSD,
     functionName: "isOperator",
@@ -53,12 +85,13 @@ async function ensureOperator(me: Address, spender: Address): Promise<void> {
   if (ok) return;
   const until = Math.floor(Date.now() / 1000) + OPERATOR_WINDOW;
   const hash = await writeContract(wagmiConfig, {
+    chainId: CHAIN,
     abi: confidentialUSDAbi,
     address: addresses.ConfidentialUSD,
     functionName: "setOperator",
     args: [spender, until],
   });
-  await waitForTransactionReceipt(wagmiConfig, { hash });
+  await waitForTransactionReceipt(wagmiConfig, { chainId: CHAIN, hash });
 }
 
 export async function createPacketLive(args: {
@@ -67,21 +100,25 @@ export async function createPacketLive(args: {
   packetKey: PacketKey;
   memo: string;
 }): Promise<bigint> {
+  await ensureSepolia();
   await ensureOperator(args.me, addresses.RedPacketVault);
   const { handles, inputProof } = await encryptAmounts(addresses.RedPacketVault, args.me, args.amounts);
   const hash = await writeContract(wagmiConfig, {
+    chainId: CHAIN,
     abi: redPacketVaultAbi,
     address: addresses.RedPacketVault,
     functionName: "createPacket",
     args: [handles, inputProof, args.packetKey.address, args.memo],
   });
-  await waitForTransactionReceipt(wagmiConfig, { hash });
-  const next = (await readContract(wagmiConfig, {
-    abi: redPacketVaultAbi,
-    address: addresses.RedPacketVault,
-    functionName: "nextPacketId",
-  })) as bigint;
-  return next - 1n;
+  const receipt = await waitForTransactionReceipt(wagmiConfig, { chainId: CHAIN, hash });
+  // Read the packetId from THIS tx's own PacketCreated event, not the global
+  // nextPacketId counter: the counter advances when any other wallet creates a
+  // packet between our confirmation and the read, so nextPacketId-1 could point
+  // at someone else's packet and bake the wrong id into our QR/link.
+  const events = parseEventLogs({ abi: redPacketVaultAbi, eventName: "PacketCreated", logs: receipt.logs });
+  const ev = events.find((e) => e.address.toLowerCase() === addresses.RedPacketVault.toLowerCase());
+  if (!ev) throw new Error("createPacket: PacketCreated event not found in receipt");
+  return (ev.args as { packetId: bigint }).packetId;
 }
 
 export async function claimLive(payload: PacketPayload, me: Address): Promise<bigint> {
@@ -89,6 +126,7 @@ export async function claimLive(payload: PacketPayload, me: Address): Promise<bi
 
   // Already claimed by this wallet? Don't send a doomed tx — just reveal the amount.
   const claimed = (await readContract(wagmiConfig, {
+    chainId: CHAIN,
     abi: redPacketVaultAbi,
     address: payload.v,
     functionName: "hasClaimed",
@@ -96,18 +134,21 @@ export async function claimLive(payload: PacketPayload, me: Address): Promise<bi
   })) as boolean;
 
   if (!claimed) {
+    await ensureSepolia();
     const signature = await signClaim({ packetPrivateKey: payload.k, vault: payload.v, packetId, claimer: me });
     const hash = await writeContract(wagmiConfig, {
+      chainId: CHAIN,
       abi: redPacketVaultAbi,
       address: payload.v,
       functionName: "claim",
       args: [packetId, signature],
     });
-    await waitForTransactionReceipt(wagmiConfig, { hash });
+    await waitForTransactionReceipt(wagmiConfig, { chainId: CHAIN, hash });
   }
 
   // Resolve the slot this wallet got + its encrypted amount, then decrypt for the user.
   const info = (await readContract(wagmiConfig, {
+    chainId: CHAIN,
     abi: redPacketVaultAbi,
     address: payload.v,
     functionName: "claimInfo",
@@ -119,15 +160,31 @@ export async function claimLive(payload: PacketPayload, me: Address): Promise<bi
 }
 
 export async function payLive(payload: PayRequestPayload, me: Address, amount: bigint): Promise<void> {
+  // Stale/duplicate request guard: a pay QR carries a one-time nonce. If it was
+  // already spent, fail fast with a clear message instead of doing the encrypt +
+  // operator-approval + signature round-trip only to revert with "Pay: nonce used".
+  // nonceKey(recipient, nonce) = keccak256(abi.encodePacked(recipient, nonce)) — matches ConfidentialPay.sol.
+  const nonceK = keccak256(encodePacked(["address", "uint256"], [payload.a, BigInt(payload.n)]));
+  const used = (await readContract(wagmiConfig, {
+    chainId: CHAIN,
+    abi: confidentialPayAbi,
+    address: addresses.ConfidentialPay,
+    functionName: "nonceUsed",
+    args: [nonceK],
+  })) as boolean;
+  if (used) throw new NonceUsedError();
+
+  await ensureSepolia();
   await ensureOperator(me, addresses.ConfidentialPay);
   const { handle, inputProof } = await encryptAmount(addresses.ConfidentialPay, me, amount);
   const hash = await writeContract(wagmiConfig, {
+    chainId: CHAIN,
     abi: confidentialPayAbi,
     address: addresses.ConfidentialPay,
     functionName: "pay",
     args: [payload.a, BigInt(payload.n), handle, inputProof, payload.m ?? ""],
   });
-  await waitForTransactionReceipt(wagmiConfig, { hash });
+  await waitForTransactionReceipt(wagmiConfig, { chainId: CHAIN, hash });
 }
 
 /** Creator-side reveal of a packet's encrypted total (creator holds decrypt rights). */
@@ -137,13 +194,15 @@ export async function revealPacketTotalLive(totalHandle: Hex, me: Address): Prom
 }
 
 export async function grantPacketAuditorLive(packetId: bigint, auditor: Address): Promise<void> {
+  await ensureSepolia();
   const hash = await writeContract(wagmiConfig, {
+    chainId: CHAIN,
     abi: redPacketVaultAbi,
     address: addresses.RedPacketVault,
     functionName: "grantAuditor",
     args: [packetId, auditor],
   });
-  await waitForTransactionReceipt(wagmiConfig, { hash });
+  await waitForTransactionReceipt(wagmiConfig, { chainId: CHAIN, hash });
 }
 
 export interface LivePacketView {
@@ -159,6 +218,7 @@ export interface LivePacketView {
 
 export async function getPacketLive(packetId: bigint): Promise<LivePacketView> {
   const r = (await readContract(wagmiConfig, {
+    chainId: CHAIN,
     abi: redPacketVaultAbi,
     address: addresses.RedPacketVault,
     functionName: "getPacket",
@@ -179,7 +239,7 @@ export async function getPacketLive(packetId: bigint): Promise<LivePacketView> {
 const DEPLOY_BLOCK = BigInt(process.env.NEXT_PUBLIC_DEPLOY_BLOCK ?? "0");
 
 export async function myPacketsLive(me: Address): Promise<LivePacketView[]> {
-  const pc = getPublicClient(wagmiConfig, { chainId: sepolia.id });
+  const pc = getPublicClient(wagmiConfig, { chainId: CHAIN });
   if (!pc) return [];
   const logs = await pc.getLogs({
     address: addresses.RedPacketVault,
@@ -203,6 +263,7 @@ export interface AuditableItem {
 
 export async function auditableLive(me: Address): Promise<AuditableItem[]> {
   const grants = (await readContract(wagmiConfig, {
+    chainId: CHAIN,
     abi: auditRegistryAbi,
     address: addresses.AuditRegistry,
     functionName: "grantsFor",
@@ -216,6 +277,7 @@ export async function auditableLive(me: Address): Promise<AuditableItem[]> {
       out.push({ kind: "packet", refId: g.refId.toString(), contract: addresses.RedPacketVault, handle: p.totalHandle, label: p.memo || `Packet #${g.refId}`, grantedBy: g.grantedBy });
     } else if (g.source.toLowerCase() === addresses.ConfidentialPay.toLowerCase()) {
       const r = (await readContract(wagmiConfig, {
+        chainId: CHAIN,
         abi: confidentialPayAbi,
         address: addresses.ConfidentialPay,
         functionName: "getPayment",

@@ -47,7 +47,11 @@ export function PayConfirmSheet({
       setDone(true);
       toast.success("Payment sent", "Amount encrypted on-chain");
     } catch (e: any) {
-      toast.error("Payment failed", e?.shortMessage ?? e?.message);
+      if (e?.name === "NonceUsedError") {
+        toast.error("Already paid", "This request was already paid. Ask for a fresh code.");
+      } else {
+        toast.error("Payment failed", e?.shortMessage ?? e?.message);
+      }
     } finally {
       setBusy(false);
     }

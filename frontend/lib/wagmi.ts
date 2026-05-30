@@ -12,7 +12,9 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://sealqr.app";
 export const walletConnectEnabled = Boolean(WC_PROJECT_ID);
 
 const connectors: CreateConnectorFn[] = [injected({ shimDisconnect: true })];
-if (WC_PROJECT_ID) {
+// Only add WalletConnect in the browser: its IndexedDB-backed storage is touched
+// at instantiation and throws `indexedDB is not defined` during Next.js SSG.
+if (WC_PROJECT_ID && typeof window !== "undefined") {
   connectors.push(
     walletConnect({
       projectId: WC_PROJECT_ID,
