@@ -10,7 +10,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { toast } from "@/lib/toast";
 
 export function ConnectButton() {
-  const { mode, address, needsWallet, connect, connecting, disconnect, resetDemo } = useSeal();
+  const { mode, address, needsWallet, connect, connecting, disconnect, resetDemo, wrongNetwork } = useSeal();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -59,7 +59,13 @@ export function ConnectButton() {
         aria-expanded={open}
         className="flex shrink-0 items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-2 text-xs font-medium text-white transition hover:bg-white/[0.08] sm:px-3 sm:text-sm"
       >
-        <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_1px_rgba(52,211,153,0.55)]" />
+        <span
+          className={
+            wrongNetwork
+              ? "h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_8px_1px_rgba(251,191,36,0.6)]"
+              : "h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_1px_rgba(52,211,153,0.55)]"
+          }
+        />
         {shortAddr(address)}
       </button>
 

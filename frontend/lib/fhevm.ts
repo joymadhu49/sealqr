@@ -27,7 +27,15 @@ async function loadInstance(): Promise<FhevmInstance> {
 }
 
 export function getFhevm(): Promise<FhevmInstance> {
-  if (!instancePromise) instancePromise = loadInstance();
+  if (!instancePromise) {
+    instancePromise = loadInstance().catch((e) => {
+      // Never cache a *failed* load: a single transient relayer/WASM error would
+      // otherwise stick to the singleton and break every future reveal until a
+      // full page reload. Reset so the next call retries from scratch.
+      instancePromise = null;
+      throw e;
+    });
+  }
   return instancePromise;
 }
 
@@ -120,7 +128,9 @@ export async function userDecrypt(
   );
 
   for (const i of real) {
-    const v = result[i.handle];
+    // The relayer SDK keys results by lowercase hex; tolerate either casing so a
+    // mixed-case handle can never silently decrypt to 0.
+    const v = result[i.handle.toLowerCase() as Hex] ?? result[i.handle];
     out[i.handle] = typeof v === "bigint" ? v : BigInt(v ?? 0);
   }
   return out;

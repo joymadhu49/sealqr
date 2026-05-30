@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { useAccount, useConnect, useDisconnect, type Connector } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useSwitchChain, type Connector } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import type { Address } from "viem";
 import { appMode, type AppMode } from "./mode";
@@ -30,6 +30,10 @@ interface SealContext {
   connecting: boolean;
   pickerOpen: boolean;
   closePicker: () => void;
+  // network
+  wrongNetwork: boolean;
+  switchToSepolia: () => void;
+  switchingChain: boolean;
   // balance
   balance: bigint | null;
   balanceHidden: boolean;
@@ -63,9 +67,10 @@ export function SealProvider({ children }: { children: React.ReactNode }) {
   const mode = appMode();
   const isDemo = mode === "demo";
 
-  const { address: wagmiAddress, isConnected } = useAccount();
+  const { address: wagmiAddress, isConnected, chainId: walletChainId } = useAccount();
   const { connectors, connect: wagmiConnect, status: connectStatus } = useConnect();
   const { disconnect: wagmiDisconnect } = useDisconnect();
+  const { switchChainAsync, isPending: switchingChain } = useSwitchChain();
   const [pickerOpen, setPickerOpen] = useState(false);
 
   // Subscribe to the demo store for reactive reads.
@@ -80,10 +85,39 @@ export function SealProvider({ children }: { children: React.ReactNode }) {
   const address = isDemo ? demoState.me : wagmiAddress;
   const needsWallet = !isDemo && !isConnected;
 
+  // The wallet's *actual* active chain comes from useAccount().chainId (the
+  // connection chain) — NOT useChainId(), which wagmi clamps to a configured
+  // chain and would always read "sepolia" here, hiding the mismatch.
+  const wrongNetwork = !isDemo && isConnected && walletChainId !== undefined && walletChainId !== sepolia.id;
+
+  const switchToSepolia = useCallback(() => {
+    switchChainAsync({ chainId: sepolia.id }).catch((err: any) => {
+      const msg = err?.shortMessage ?? err?.message ?? "Approve the network switch in your wallet";
+      const rejected = /reject|denied|cancell?ed/i.test(String(msg));
+      toast.error(
+        rejected ? "Switch to Sepolia" : "Couldn't switch network",
+        rejected ? "Approve the network switch in your wallet to use SealQR" : msg,
+      );
+    });
+  }, [switchChainAsync]);
+
+  // Auto-prompt the switch once when a wrong-network wallet connects. Keyed on
+  // wrongNetwork + the stable callback, so a declined switch doesn't re-spam.
+  useEffect(() => {
+    if (wrongNetwork) switchToSepolia();
+  }, [wrongNetwork, switchToSepolia]);
+
   const [balance, setBalance] = useState<bigint | null>(null);
   const [balanceHidden, setBalanceHidden] = useState(true);
   const [revealing, setRevealing] = useState(false);
   const [loadingBalance, setLoadingBalance] = useState(false);
+
+  // Never carry a revealed balance across an account/identity switch — it was
+  // decrypted for a different wallet. Force a fresh, explicit reveal each time.
+  useEffect(() => {
+    setBalance(null);
+    setBalanceHidden(true);
+  }, [address]);
 
   const refreshBalance = useCallback(async () => {
     if (!address) return;
@@ -297,6 +331,9 @@ export function SealProvider({ children }: { children: React.ReactNode }) {
       connecting: connectStatus === "pending",
       pickerOpen,
       closePicker: () => setPickerOpen(false),
+      wrongNetwork,
+      switchToSepolia,
+      switchingChain,
       balance,
       balanceHidden,
       revealing,
@@ -319,7 +356,7 @@ export function SealProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       mode, address, isDemo, isConnected, needsWallet, connect, wagmiDisconnect, connectors, connectWith, connectStatus,
-      pickerOpen, balance, balanceHidden, revealing,
+      pickerOpen, wrongNetwork, switchToSepolia, switchingChain, balance, balanceHidden, revealing,
       loadingBalance, refreshBalance, revealBalance, hideBalance, faucet, createPacket, claim, pay, grantPacketAuditor,
       myPackets, refreshPackets, myPayments,
     ],
