@@ -14,3 +14,6 @@ artifacts/
 cache/
 typechain-types/
 deployments/
+
+# Local session log — not for GitHub
+SUMMARY.md
