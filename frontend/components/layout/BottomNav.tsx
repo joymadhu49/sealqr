@@ -18,16 +18,21 @@ export function BottomNav() {
   const pathname = usePathname();
   return (
     <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-md px-4 pb-3">
-      <div className="relative flex items-center justify-between rounded-[26px] border border-white/[0.08] bg-surface-raised/85 px-2 py-2 shadow-lift backdrop-blur-2xl">
+      <div className="relative flex items-center justify-between rounded-3xl border border-white/[0.08] bg-surface-raised/90 px-2 py-2 shadow-lift backdrop-blur-2xl">
         {tabs.map((t) => {
           const active = t.href === "/" ? pathname === "/" : pathname.startsWith(t.href);
           const Icon = t.icon;
           if (t.center) {
             return (
-              <Link key={t.href} href={t.href} className="relative -mt-8 flex flex-col items-center">
-                <span className="grid h-14 w-14 place-items-center rounded-2xl bg-seal-gradient shadow-glow ring-4 ring-ink-950 transition active:scale-95">
+              <Link key={t.href} href={t.href} className="relative z-40 -mt-8 flex flex-col items-center">
+                <motion.span
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.92 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                  className="grid h-14 w-14 place-items-center rounded-2xl bg-seal-gradient shadow-glow ring-4 ring-ink-950"
+                >
                   <Icon className="h-6 w-6 text-ink-950" strokeWidth={2.4} />
-                </span>
+                </motion.span>
                 <span className="mt-1 text-[10px] font-semibold text-seal-400">{t.label}</span>
               </Link>
             );

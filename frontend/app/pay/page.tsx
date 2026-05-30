@@ -38,7 +38,7 @@ export default function PayPage() {
   return (
     <div className="space-y-6 pt-2">
       <motion.div {...fade(0)} className="px-1">
-        <p className="label">Receive</p>
+        <p className="label">Request</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight">Get paid</h1>
         <p className="mt-1.5 text-sm text-white/50">
           Show this code. The payer enters the amount — it never appears in the QR.

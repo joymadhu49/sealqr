@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useConnect, useDisconnect, type Connector } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import type { Address } from "viem";
 import { appMode, type AppMode } from "./mode";
@@ -13,6 +13,7 @@ import type { PacketPayload, PayRequestPayload } from "./payloads";
 import { generatePacketKey, equalSplit, luckySplit } from "./redpacket";
 import * as live from "./actions";
 import type { CreatePacketResult, PacketCard, PaymentCard } from "./types";
+import { toast } from "./toast";
 
 const ZERO = "0x0000000000000000000000000000000000000000" as Address;
 
@@ -23,6 +24,12 @@ interface SealContext {
   needsWallet: boolean;
   connect: () => void;
   disconnect: () => void;
+  // wallet picker (injected + WalletConnect)
+  connectors: readonly Connector[];
+  connectWith: (c: Connector) => void;
+  connecting: boolean;
+  pickerOpen: boolean;
+  closePicker: () => void;
   // balance
   balance: bigint | null;
   balanceHidden: boolean;
@@ -57,8 +64,9 @@ export function SealProvider({ children }: { children: React.ReactNode }) {
   const isDemo = mode === "demo";
 
   const { address: wagmiAddress, isConnected } = useAccount();
-  const { connectors, connect: wagmiConnect } = useConnect();
+  const { connectors, connect: wagmiConnect, status: connectStatus } = useConnect();
   const { disconnect: wagmiDisconnect } = useDisconnect();
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   // Subscribe to the demo store for reactive reads.
   const demoState = useSyncExternalStore(
@@ -88,7 +96,7 @@ export function SealProvider({ children }: { children: React.ReactNode }) {
   }, [address, isDemo, balanceHidden]);
 
   const revealBalance = useCallback(async () => {
-    if (!address) return;
+    if (!address || revealing) return;
     setRevealing(true);
     try {
       if (isDemo) {
@@ -100,10 +108,16 @@ export function SealProvider({ children }: { children: React.ReactNode }) {
         setBalance(dec[handle] ?? 0n);
       }
       setBalanceHidden(false);
+    } catch (e: any) {
+      // Surface the failure instead of dying silently — without this the spinner
+      // just stops and nothing reveals, which reads as "reveal does nothing".
+      const msg = e?.shortMessage ?? e?.message ?? "Could not decrypt your balance";
+      const rejected = /reject|denied|user denied|cancell?ed/i.test(String(msg));
+      toast.error(rejected ? "Signature cancelled" : "Reveal failed", rejected ? "Approve the signature to decrypt" : msg);
     } finally {
       setRevealing(false);
     }
-  }, [address, isDemo]);
+  }, [address, isDemo, revealing]);
 
   const hideBalance = useCallback(() => {
     setBalanceHidden(true);
@@ -246,9 +260,29 @@ export function SealProvider({ children }: { children: React.ReactNode }) {
   }, [address, isDemo, demoState]);
 
   const connect = useCallback(() => {
-    const c = connectors[0];
-    if (c) wagmiConnect({ connector: c });
+    // One connector → connect straight away; multiple → let the user pick.
+    if (connectors.length <= 1) {
+      const c = connectors[0];
+      if (c) wagmiConnect({ connector: c }, { onError: (err: any) => toast.error("Couldn't connect", err?.shortMessage ?? err?.message) });
+      return;
+    }
+    setPickerOpen(true);
   }, [connectors, wagmiConnect]);
+
+  const connectWith = useCallback(
+    (c: Connector) => {
+      wagmiConnect(
+        { connector: c },
+        { onError: (err: any) => toast.error("Couldn't connect", err?.shortMessage ?? err?.message) },
+      );
+    },
+    [wagmiConnect],
+  );
+
+  // Close the picker once a wallet connects.
+  useEffect(() => {
+    if (isConnected) setPickerOpen(false);
+  }, [isConnected]);
 
   const value = useMemo<SealContext>(
     () => ({
@@ -258,6 +292,11 @@ export function SealProvider({ children }: { children: React.ReactNode }) {
       needsWallet,
       connect,
       disconnect: () => wagmiDisconnect(),
+      connectors,
+      connectWith,
+      connecting: connectStatus === "pending",
+      pickerOpen,
+      closePicker: () => setPickerOpen(false),
       balance,
       balanceHidden,
       revealing,
@@ -279,7 +318,8 @@ export function SealProvider({ children }: { children: React.ReactNode }) {
       },
     }),
     [
-      mode, address, isDemo, isConnected, needsWallet, connect, wagmiDisconnect, balance, balanceHidden, revealing,
+      mode, address, isDemo, isConnected, needsWallet, connect, wagmiDisconnect, connectors, connectWith, connectStatus,
+      pickerOpen, balance, balanceHidden, revealing,
       loadingBalance, refreshBalance, revealBalance, hideBalance, faucet, createPacket, claim, pay, grantPacketAuditor,
       myPackets, refreshPackets, myPayments,
     ],

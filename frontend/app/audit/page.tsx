@@ -9,6 +9,7 @@ import { auditableLive, decryptHandles } from "@/lib/actions";
 import { formatCUSD, shortAddr } from "@/lib/format";
 import { RevealValue } from "@/components/CipherText";
 import { Spinner } from "@/components/ui/Spinner";
+import { toast } from "@/lib/toast";
 
 interface AuditItem {
   key: string;
@@ -102,9 +103,8 @@ export default function AuditPage() {
         </span>
         <div>
           <h3 className="text-sm font-semibold text-white">Scoped view keys</h3>
-          <p className="mt-1 text-xs leading-relaxed text-white/50">
-            A sender or org grants you decryption rights for specific packets or payments. You reconcile the real
-            totals; the public ledger stays blind.{" "}
+          <p className="mt-1 text-xs leading-relaxed text-white/55">
+            A sender has granted you access to verify specific amounts. No one else can see what you reveal here.{" "}
             {isDemo && "Tip: on the Packet tab, grant a packet's auditor access to your own address, then reveal it here."}
           </p>
         </div>
@@ -157,6 +157,9 @@ function AuditRow({ item }: { item: AuditItem }) {
     setBusy(true);
     try {
       setValue(await item.reveal());
+    } catch (e: any) {
+      const msg = e?.shortMessage ?? e?.message ?? "Could not decrypt";
+      toast.error(/reject|denied|cancell?ed/i.test(String(msg)) ? "Signature cancelled" : "Reveal failed", msg);
     } finally {
       setBusy(false);
     }

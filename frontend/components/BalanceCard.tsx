@@ -39,8 +39,8 @@ export function BalanceCard() {
           onClick={() => (balanceHidden ? revealBalance() : hideBalance())}
           disabled={revealing}
           className={cn(
-            "rounded-full border border-white/[0.08] bg-white/[0.04] p-2 text-white/65 transition hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60",
-            !balanceHidden && "border-seal-500/30 text-seal-300",
+            "grid h-9 w-9 place-items-center rounded-full border border-white/[0.08] bg-white/[0.04] text-white/65 transition hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60",
+            !balanceHidden && "border-seal-500/40 bg-seal-500/10 text-seal-300",
           )}
           aria-label={balanceHidden ? "Reveal balance" : "Hide balance"}
           aria-pressed={!balanceHidden}
@@ -52,7 +52,7 @@ export function BalanceCard() {
       <div className="relative mt-6 flex min-h-[3.25rem] items-end gap-2">
         {balanceHidden ? (
           <button onClick={revealBalance} className="text-left">
-            <span className="text-[2.75rem] font-bold leading-none tracking-tightest tnum text-white/90">
+            <span className="text-[2.25rem] font-bold leading-none tracking-tightest tnum sm:text-[2.75rem] text-white/90">
               <CipherText dots={6} />
             </span>
             <span className="ml-2 align-middle text-base font-medium text-white/40">cUSD</span>
@@ -62,7 +62,7 @@ export function BalanceCard() {
           </button>
         ) : (
           <div>
-            <span className="text-[2.75rem] font-bold leading-none tracking-tightest tnum text-white">
+            <span className="text-[2.25rem] font-bold leading-none tracking-tightest tnum sm:text-[2.75rem] text-white">
               <RevealValue>{balance !== null ? formatCUSD(balance, { symbol: false }) : "0"}</RevealValue>
             </span>
             <span className="ml-2 align-middle text-base font-medium text-white/40">cUSD</span>

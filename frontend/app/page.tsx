@@ -40,10 +40,10 @@ export default function HomePage() {
             <ShieldCheck className="h-5 w-5" strokeWidth={1.75} />
           </span>
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-white">Every amount stays encrypted</h3>
-            <p className="mt-1.5 text-xs leading-relaxed text-white/50">
-              The chain records that a payment happened — never how much. Only you can decrypt your own balance and
-              transfers.
+            <h3 className="text-sm font-semibold text-white">Your amounts stay hidden</h3>
+            <p className="mt-1.5 text-xs leading-relaxed text-white/55">
+              The blockchain records that a payment happened — never how much. Only your device can decrypt your own
+              balance and transfers.
             </p>
           </div>
         </div>
@@ -70,9 +70,9 @@ export default function HomePage() {
             <div className="grid h-14 w-14 place-items-center rounded-2xl border border-white/[0.06] bg-white/[0.03]">
               <Inbox className="h-6 w-6 text-white/40" strokeWidth={1.75} />
             </div>
-            <p className="text-sm font-medium text-white/70">No activity yet</p>
-            <p className="max-w-[15rem] text-xs leading-relaxed text-white/40">
-              Request a payment or send a red packet — your confidential history appears here.
+            <p className="text-sm font-medium text-white/80">Your history stays private</p>
+            <p className="max-w-[15rem] text-xs leading-relaxed text-white/50">
+              Only you can see your activity. Request a payment or send a red packet to begin.
             </p>
           </div>
         ) : (
@@ -167,9 +167,11 @@ function QuickAction({
       ? "bg-lucky-500/10 text-lucky-400 group-hover:bg-lucky-500/[0.16]"
       : "bg-white/[0.05] text-white/70 group-hover:bg-white/[0.08]";
   return (
-    <Link href={href} className="group card card-hover flex flex-col items-center gap-2.5 px-2 py-5">
-      <span className={`grid h-11 w-11 place-items-center rounded-2xl transition ${tile}`}>{icon}</span>
-      <span className="text-xs font-medium text-white/75">{label}</span>
-    </Link>
+    <motion.div whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 400, damping: 22 }}>
+      <Link href={href} className="group card card-hover flex flex-col items-center gap-2.5 px-2 py-5">
+        <span className={`grid h-11 w-11 place-items-center rounded-2xl transition ${tile}`}>{icon}</span>
+        <span className="text-xs font-medium text-white/75">{label}</span>
+      </Link>
+    </motion.div>
   );
 }

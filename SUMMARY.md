@@ -1,8 +1,31 @@
 # SealQR — Session Summary
 
-_Last updated: 2026-05-30 (Premium Fintech redesign)_
+_Last updated: 2026-05-30 (Reveal-bug fix + WalletConnect + UX polish pass)_
 
 Confidential payments-by-QR + confidential red packets (红包) on Zama FHEVM / ERC-7984. Built from `plan/PLAN.md` for the Zama Developer Program (Special Bounty × TokenOps, UX-scored). Deadline **2026-07-07**.
+
+---
+
+## 🔧 Reveal bug + WalletConnect + UX polish (2026-05-30, latest)
+
+`pnpm build` green (9/9 routes). All pages serve 200 on dev. Net new file: `components/wallet/WalletSheet.tsx`.
+
+### Bug fixes (the reported "reveal balance does nothing")
+- **Root cause:** `lib/seal.tsx revealBalance()` had **no try/catch** and `BalanceCard` fired it unawaited — any failure (WASM load, EIP-712 sign rejection, relayer) died silently, so the spinner just stopped and nothing revealed ("never transitions to wallet"). Now wrapped: surfaces `toast.error` (distinguishes "Signature cancelled" from real failures). Same fix applied to `app/audit/page.tsx` reveal.
+- **`lib/fhevm.ts`:** relayer `network` was `window.ethereum` → broke on wrong chain / mobile / WalletConnect (no injected provider). Now uses the configured **Sepolia RPC** (`NEXT_PUBLIC_SEPOLIA_RPC_URL`) — chain-agnostic ACL/KMS reads, works for any wallet.
+
+### WalletConnect
+- `lib/wagmi.ts` — added `walletConnect` connector (gated on `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`; injected always on). New env var in `.env.local`/`.env.example`. **User supplied a live project id** → WalletConnect active.
+- New `components/wallet/WalletSheet.tsx` — global connect picker (Injected vs WalletConnect QR), mounted in `AppShell`. `lib/seal.tsx` now exposes `connectors`/`connectWith`/`connecting`/`pickerOpen`; `connect()` opens the picker (or direct-connects when only one connector). Every "Connect wallet" CTA app-wide now gets the picker for free.
+- Benign build noise: WalletConnect logs `indexedDB is not defined` + a chunk circular-dep warning during SSG — non-fatal, pages prerender fine.
+
+### UX/UI polish (from a 6-dimension multi-agent audit, 47/50 findings verified; high-value subset applied)
+- **Consistency:** legacy `iris-*` → `seal-*` everywhere (single violet accent); border radii unified (`rounded-3xl` on nav/sheet/QR); trimmed glow overuse (header logo, packet list rows, QR) — glow now reserved for true CTAs + nav center.
+- **A11y:** `aria-label` + ≥40px tap targets on all icon-only close/refresh buttons; `.label` contrast `white/40→/55`; surfaces slightly more opaque for legibility; descriptive QR `alt`; **`prefers-reduced-motion`** media query added.
+- **Mobile:** QR responsive (`h-44 sm:h-56`, no 320px overflow); balance amount responsive (`2.25rem sm:2.75rem`); header badge/connect pill shrink on small screens; nav center `z-40`; sheet drag threshold 120→140px.
+- **Flows:** ClaimSheet "Open packet" now `disabled` during claim (no double-claim); clipboard copy/share + connect now have error toasts; QRScanner gained a **"Try camera again"** recovery + clearer error copy.
+- **Delight:** tactile `whileTap` on quick-action tiles + nav center; punchier confetti + **haptic** (`navigator.vibrate`) on packet open; stronger revealed-state ring on the balance eye toggle.
+- **Copy:** assertive privacy/empty-state strings; "Packet sealed · Share the link"; less-jargon audit disclosure; consistent "Request" terminology.
 
 ---
 

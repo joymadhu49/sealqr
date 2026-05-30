@@ -33,23 +33,27 @@ export function QRDisplay({
         await (navigator as any).share({ title: "SealQR", text: caption ?? "Scan to claim", url: data });
         return;
       } catch {
-        /* user cancelled */
+        /* user cancelled — fall through to copy */
       }
     }
-    await copy(data);
-    toast.success("Link copied");
+    try {
+      await copy(data);
+      toast.success("Link copied");
+    } catch {
+      toast.error("Couldn't copy", "Long-press the code to copy it manually");
+    }
   };
 
   const glow = accent === "lucky" ? "shadow-glow-lucky" : "shadow-glow";
 
   return (
     <div className="flex flex-col items-center">
-      <div className={`rounded-[28px] bg-white p-5 ${glow}`}>
+      <div className={`rounded-3xl bg-white p-5 ${glow}`}>
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt="QR code" width={256} height={256} className="h-56 w-56 rounded-2xl" />
+          <img src={src} alt={caption ?? "SealQR code"} width={256} height={256} className="h-44 w-44 rounded-2xl sm:h-56 sm:w-56" />
         ) : (
-          <div className="grid h-56 w-56 place-items-center rounded-2xl text-ink-900">
+          <div className="grid h-44 w-44 place-items-center rounded-2xl text-ink-900 sm:h-56 sm:w-56">
             <Spinner className="h-6 w-6" />
           </div>
         )}
@@ -58,9 +62,13 @@ export function QRDisplay({
       <div className="mt-4 flex gap-2">
         <button
           onClick={async () => {
-            await copy(data);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
+            try {
+              await copy(data);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            } catch {
+              toast.error("Couldn't copy", "Long-press the code to copy it manually");
+            }
           }}
           className="btn-ghost px-4 py-2.5 text-sm"
         >

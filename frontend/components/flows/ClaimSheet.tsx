@@ -41,6 +41,7 @@ export function ClaimSheet({
       const got = await claim(payload);
       setAmount(got);
       setStage("claimed");
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([40, 30, 60]);
     } catch (e: any) {
       setStage("ready");
       toast.error("Claim failed", e?.shortMessage ?? e?.message);
@@ -79,7 +80,7 @@ export function ClaimSheet({
                           x: Math.cos(angle) * dist,
                           y: Math.sin(angle) * dist,
                         }}
-                        transition={{ duration: 1.2, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+                        transition={{ duration: 1.1, delay: i * 0.045, ease: [0.34, 1.56, 0.64, 1] }}
                         className={`absolute left-1/2 top-1/2 h-2 w-2 rounded-full ${colors[i % colors.length]}`}
                       />
                     );
@@ -139,7 +140,7 @@ export function ClaimSheet({
                   Connect wallet to claim
                 </button>
               ) : (
-                <button onClick={onClaim} className="btn-lucky mt-6 w-full">
+                <button onClick={onClaim} disabled={stage !== "ready"} className="btn-lucky mt-6 w-full">
                   <Gift className="h-4 w-4" /> Open packet
                 </button>
               )}

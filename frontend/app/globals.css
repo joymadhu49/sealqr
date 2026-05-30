@@ -39,13 +39,13 @@ body {
 @layer components {
   /* ---- Surfaces ---- */
   .card {
-    @apply rounded-3xl border border-white/[0.08] bg-surface/90 backdrop-blur-xl shadow-card;
+    @apply rounded-3xl border border-white/[0.08] bg-surface/95 backdrop-blur-xl shadow-card;
   }
   .card-flat {
-    @apply rounded-3xl border border-white/[0.06] bg-white/[0.02];
+    @apply rounded-3xl border border-white/[0.06] bg-white/[0.03];
   }
   .card-inset {
-    @apply rounded-2xl border border-white/[0.06] bg-ink-900/70;
+    @apply rounded-2xl border border-white/[0.06] bg-ink-900/80;
   }
   .card-hover {
     @apply transition-all duration-300 hover:border-white/[0.14] hover:bg-surface active:scale-[0.995] cursor-pointer;
@@ -63,7 +63,7 @@ body {
     @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-white/65;
   }
   .pill-tag {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.03] px-2.5 py-0.5 text-[11px] font-medium text-white/55;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.05] px-2.5 py-0.5 text-[11px] font-medium text-white/60;
   }
   .pill-accent {
     @apply inline-flex items-center gap-1.5 rounded-full border border-seal-500/25 bg-seal-500/10 px-3 py-1 text-xs font-medium text-seal-200;
@@ -76,7 +76,7 @@ body {
     @apply inline-flex items-center gap-1.5 rounded-full border border-zama-500/30 bg-zama-500/[0.08] px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-zama-400;
   }
   .label {
-    @apply text-[11px] font-medium uppercase tracking-[0.16em] text-white/40;
+    @apply text-[11px] font-medium uppercase tracking-[0.16em] text-white/55;
   }
 
   /* ---- Inputs ---- */
@@ -95,7 +95,7 @@ body {
     @apply btn bg-lucky-gradient text-white shadow-glow-lucky hover:brightness-[1.08];
   }
   .btn-ghost {
-    @apply btn border border-white/[0.1] bg-white/[0.03] text-white hover:bg-white/[0.07];
+    @apply btn border border-white/[0.1] bg-white/[0.05] text-white hover:bg-white/[0.09];
   }
   .btn-dark {
     @apply btn bg-ink-700 text-white hover:bg-ink-600;
@@ -149,4 +149,17 @@ body {
 button:focus-visible,
 a:focus-visible {
   outline-offset: 3px;
+}
+
+/* Respect reduced-motion: kill the heavy springs/confetti/scan-line for users
+   who ask for less motion (vestibular safety). Framer-motion honours this too. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

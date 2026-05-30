@@ -14,6 +14,7 @@ export function QRScanner({ onResult }: { onResult: (payload: SealPayload) => vo
   const [manual, setManual] = useState(false);
   const [manualText, setManualText] = useState("");
   const [hint, setHint] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
   const handled = useRef(false);
   const lastSeen = useRef<string>("");
 
@@ -69,12 +70,19 @@ export function QRScanner({ onResult }: { onResult: (payload: SealPayload) => vo
       controlsRef.current?.stop();
       controlsRef.current = null;
     };
-  }, [onResult]);
+  }, [onResult, retry]);
+
+  const retryCamera = () => {
+    setError(null);
+    setStarting(true);
+    handled.current = false;
+    setRetry((r) => r + 1);
+  };
 
   const submitManual = () => {
     const payload = decodePayload(manualText);
     if (payload) onResult(payload);
-    else setError("That doesn't look like a SealQR code.");
+    else setError("Invalid code. Paste the full code starting with “sealqr:”.");
   };
 
   return (
@@ -121,10 +129,15 @@ export function QRScanner({ onResult }: { onResult: (payload: SealPayload) => vo
                 <CameraOff className="h-5 w-5 text-lucky-400" />
               </span>
               <p className="text-sm font-medium text-white">Camera unavailable</p>
-              <p className="max-w-xs text-xs leading-relaxed text-white/50">{error}</p>
-              <button onClick={() => setManual(true)} className="btn-ghost mt-1 px-4 py-2 text-xs">
-                <Keyboard className="h-4 w-4" /> Enter code instead
-              </button>
+              <p className="max-w-xs text-xs leading-relaxed text-white/55">{error}</p>
+              <div className="mt-1 flex w-full max-w-[15rem] flex-col gap-2">
+                <button onClick={retryCamera} className="btn-ghost px-4 py-2 text-xs">
+                  <ScanLine className="h-4 w-4" /> Try camera again
+                </button>
+                <button onClick={() => setManual(true)} className="btn-ghost px-4 py-2 text-xs">
+                  <Keyboard className="h-4 w-4" /> Enter code instead
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -147,12 +160,13 @@ export function QRScanner({ onResult }: { onResult: (payload: SealPayload) => vo
             <span className="label">Paste code</span>
             <button
               type="button"
+              aria-label="Close manual entry"
               onClick={() => {
                 setManual(false);
                 setError(null);
                 setManualText("");
               }}
-              className="rounded-xl p-1.5 text-white/40 transition hover:bg-white/5 hover:text-white"
+              className="grid h-9 w-9 place-items-center rounded-xl text-white/45 transition hover:bg-white/5 hover:text-white"
             >
               <X className="h-4 w-4" />
             </button>

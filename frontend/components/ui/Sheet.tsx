@@ -39,15 +39,15 @@ export function Sheet({
             dragElastic={{ top: 0, bottom: 0.4 }}
             style={{ y: dragY, scale, opacity: sheetOpacity }}
             onDragEnd={(_, info) => {
-              if (info.offset.y > 120) onClose();
+              if (info.offset.y > 140) onClose();
             }}
-            className="safe-bottom fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-[28px] border-t border-white/[0.08] bg-surface-raised px-5 pb-6 pt-3 shadow-lift"
+            className="safe-bottom fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t border-white/[0.08] bg-surface-raised px-5 pb-6 pt-3 shadow-lift"
           >
             <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-white/15" />
             {title && (
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white">{title}</h2>
-                <button onClick={onClose} className="rounded-xl p-1.5 text-white/40 transition hover:bg-white/5 hover:text-white">
+                <button onClick={onClose} aria-label="Close" className="grid h-10 w-10 place-items-center rounded-xl text-white/50 transition hover:bg-white/5 hover:text-white">
                   <X className="h-5 w-5" />
                 </button>
               </div>

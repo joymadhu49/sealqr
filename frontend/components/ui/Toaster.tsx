@@ -8,7 +8,7 @@ import { toastStore } from "@/lib/toast";
 const icons = {
   success: <CheckCircle2 className="h-5 w-5 text-seal-400" />,
   error: <XCircle className="h-5 w-5 text-lucky-400" />,
-  info: <Info className="h-5 w-5 text-iris-400" />,
+  info: <Info className="h-5 w-5 text-seal-400" />,
 };
 
 export function Toaster() {
@@ -38,7 +38,8 @@ export function Toaster() {
             </div>
             <button
               onClick={() => toastStore.dismiss(t.id)}
-              className="shrink-0 rounded-lg p-1 text-white/40 transition hover:bg-white/5 hover:text-white"
+              aria-label="Dismiss"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white"
             >
               <X className="h-4 w-4" />
             </button>

@@ -8,14 +8,20 @@ type FhevmInstance = any;
 
 let instancePromise: Promise<FhevmInstance> | null = null;
 
+const RELAYER_RPC =
+  process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
+
 async function loadInstance(): Promise<FhevmInstance> {
   if (typeof window === "undefined") throw new Error("FHE instance is client-only");
   const sdk = await import("@zama-fhe/relayer-sdk/web");
   // initSDK loads the TFHE/KMS WASM modules.
   if (typeof sdk.initSDK === "function") await sdk.initSDK();
+  // Use a dedicated Sepolia RPC for ACL/KMS reads rather than the injected
+  // provider: it is chain-agnostic (works even if the wallet sits on another
+  // network) and lets WalletConnect sessions decrypt without a window.ethereum.
   const config: any = {
     ...sdk.SepoliaConfig,
-    network: (window as any).ethereum ?? (sdk.SepoliaConfig as any)?.network,
+    network: RELAYER_RPC ?? (sdk.SepoliaConfig as any)?.network,
   };
   return sdk.createInstance(config);
 }

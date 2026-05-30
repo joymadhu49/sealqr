@@ -52,7 +52,7 @@ export default function PacketPage() {
       setResult({ share: { code: res.code, link: res.link, authAddr: res.authAddr }, memo, count, mode });
       setAmount("");
       setMemo("");
-      toast.success("Red packet funded", "One link · all amounts sealed");
+      toast.success("Packet sealed", "Share the link with your group");
     } catch (e: any) {
       toast.error("Could not create", e?.shortMessage ?? e?.message);
     } finally {
@@ -170,8 +170,8 @@ export default function PacketPage() {
         <motion.div {...fade(2)}>
           <div className="mb-3 flex items-center justify-between px-1">
             <p className="label">Your packets</p>
-            <button onClick={refreshPackets} className="inline-flex items-center gap-1 text-xs text-white/40 transition hover:text-white/70">
-              <RefreshCw className="h-3 w-3" /> Refresh
+            <button onClick={refreshPackets} aria-label="Refresh packets" className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs text-white/55 transition hover:border-white/[0.14] hover:text-white">
+              <RefreshCw className="h-3.5 w-3.5" /> Refresh
             </button>
           </div>
           <div className="space-y-2.5">
@@ -182,7 +182,7 @@ export default function PacketPage() {
               return (
                 <div key={p.id} className="card p-4">
                   <div className="flex items-center gap-3">
-                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-lucky-gradient shadow-glow-lucky">
+                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-lucky-gradient">
                       <Gift className="h-5 w-5 text-white" strokeWidth={1.75} />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -233,7 +233,7 @@ export default function PacketPage() {
                     )}
                     <button
                       onClick={() => setGrantFor(p.id)}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-iris-400 transition hover:text-iris-400/80"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-seal-300 transition hover:text-seal-200"
                     >
                       <ShieldCheck className="h-3.5 w-3.5" /> Grant auditor
                     </button>
@@ -344,8 +344,8 @@ function GrantSheet({
     <Sheet open={!!packetId} onClose={close} title="Grant auditor access">
       <div className="space-y-4">
         <div className="card-inset flex items-start gap-3 p-4">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-iris-500/15">
-            <ShieldCheck className="h-4 w-4 text-iris-400" />
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-seal-500/15">
+            <ShieldCheck className="h-4 w-4 text-seal-400" />
           </div>
           <p className="text-xs leading-relaxed text-white/65">
             Selective disclosure: the auditor gets a scoped key to decrypt totals and per-slot amounts for this packet
@@ -367,7 +367,7 @@ function GrantSheet({
           <>
             <div>
               <p className="label">Granting decryption access to</p>
-              <p className="mt-2 break-all rounded-2xl border border-iris-500/25 bg-iris-500/[0.06] px-4 py-3.5 font-mono text-xs leading-relaxed text-white/90">
+              <p className="mt-2 break-all rounded-2xl border border-seal-500/25 bg-seal-500/[0.06] px-4 py-3.5 font-mono text-xs leading-relaxed text-white/90">
                 {addr}
               </p>
               <p className="mt-2 flex items-center gap-1.5 text-xs text-white/45">
